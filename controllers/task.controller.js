@@ -1,5 +1,4 @@
 const Task = require("../models/Task");
-const TaskList = require("../models/TaskList");
 
 //create
 exports.saveTask = async (req, res, next) => {
@@ -22,8 +21,22 @@ exports.getAllTaskList = async (req, res, next) => {
         queries.skip = skip;
         queries.limit = parseInt(limit);
     }
+    const { searchText } = req.query;
     try {
-        const tasks = await Task.find({}, { _id: 0, __v: 0 })
+        const tasks = await Task.find(
+            {
+                $or: [
+                    { taskName: { $regex: searchText || "", $options: "i" } },
+                    {
+                        description: {
+                            $regex: searchText || "",
+                            $options: "i",
+                        },
+                    },
+                ],
+            },
+            { _id: 0, __v: 0 }
+        )
             .populate("taskListId", "name -_id")
             .limit(queries.limit)
             .skip(queries.skip);
